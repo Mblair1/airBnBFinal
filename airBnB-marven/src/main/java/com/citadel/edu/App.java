@@ -14,9 +14,16 @@ import com.citadel.edu.model.Renter;
 import com.citadel.edu.model.RenterReview;
 import com.citadel.edu.model.TransactionHandler;
 
+import services.AccountService;
+import services.HouseService;
+import services.ReviewService;
+import services.TransactionService;
+
 public class App {
-	private static ArrayList<Account> accounts = new ArrayList<Account>();
-	private static ArrayList<House> houses = new ArrayList<House>();
+	private static AccountService accountService = new AccountService();
+	private static HouseService houseService = new HouseService();
+	public static ReviewService reviewService = new ReviewService();
+	private static TransactionService transactionService = new TransactionService();
 	private static String[] session = new String[2];
 	private static Rental rental = new Rental();
 	private static TransactionHandler transactionHandler = new TransactionHandler();
@@ -24,6 +31,7 @@ public class App {
 	private static boolean signedIn;
 
 	public static void main(String[] args) {
+		
 
 		Scanner input = new Scanner(System.in);
 		do {
@@ -53,8 +61,8 @@ public class App {
 		 */
 		House house1 = new House("111 tree drive", 100);
 		House house2 = new House("222 brance ln", 120);
-		houses.add(house1);
-		houses.add(house2);
+		houseService.addHouse(house1);
+		houseService.addHouse(house2);
 
 		int choice;
 		do {
@@ -71,14 +79,14 @@ public class App {
 					System.out.println("Please enter the price per night of the house.");
 					int cost = houseScanner.nextInt();
 					House house = new House(address, cost);
-					houses.add(house);
+					houseService.addHouse(house);
 					System.out.println("Your house has been listed to be rented!");
 					break;
 				case 2:
 					int i = 0;
 					Scanner scan = new Scanner(System.in);
 					System.out.println("These are the houses we have for rent:");
-					for (House home : houses) {
+					for (House home : houseService.getHouses()) {
 						System.out.println("(" + i + ") " + home.toString());
 						i++;
 					}
@@ -89,9 +97,9 @@ public class App {
 						System.out.println("which house would you like to bookmark?");
 						try {
 							int userChoice = bookmark.nextInt();
-							for (Account account : accounts) {
+							for (Account account : accountService.getAccounts()) {
 								if (account.getUsername().equals(session[0])) {
-									System.out.println(houses.get(userChoice).getAddress() + " has been bookmarked.");
+									System.out.println(houseService.getHouses().get(userChoice).getAddress() + " has been bookmarked.");
 								}
 							}
 						} catch (IllegalArgumentException e) {
@@ -102,11 +110,11 @@ public class App {
 						try {
 							Scanner rentingScanner = new Scanner(System.in);
 							System.out.println("House number " + houseNumber + " costs "
-									+ houses.get(houseNumber).getPrice() + " per night.");
+									+ houseService.getHouses().get(houseNumber).getPrice() + " per night.");
 							System.out.println("Is this acceptable? Type 'Yes' or 'No'");
 							String yesOrNo = rentingScanner.nextLine().toLowerCase();
 							if (yesOrNo.equalsIgnoreCase("yes")) {
-								rental.setCost(houses.get(houseNumber).getPrice());
+								rental.setCost(houseService.getHouses().get(houseNumber).getPrice());
 								System.out.println("What is the start date for your rental?");
 								rental.setStartDate(rentingScanner.nextLine());
 								System.out.println("What is the end date for your rental?");
@@ -122,7 +130,7 @@ public class App {
 					break;
 				case 3:
 					System.out.println("Bye!");
-					for (Account account : accounts) {
+					for (Account account : accountService.getAccounts()) {
 						if (account.getUsername().equals(session[0]) && account.getPassword().equals(session[1])) {
 							account.signOut();
 						}
@@ -141,6 +149,7 @@ public class App {
 				System.out.println("Please write your review:");
 				String reviewStr = review.nextLine();
 				RenterReview renterReview = new RenterReview(reviewStr);
+				reviewService.addReview(renterReview);
 			} else {
 				System.out.println("Thank you! Have a nice day.");
 			}
@@ -155,6 +164,7 @@ public class App {
 			TransactionHandler.getInstance();
 			CheckTransaction check = new CheckTransaction();
 			check.process(rental);
+			transactionService.addTransaction(check);
 
 		} else {
 			Scanner scanner = new Scanner(System.in);
@@ -163,10 +173,12 @@ public class App {
 			System.out.println("Please enter your card information.");
 			String cardInfo = scanner.nextLine();
 			card.process(rental);
+			transactionService.addTransaction(card);
 		}
 	}
 
 	private static void adminSignIn() {
+		ArrayList<Account> accounts = accountService.getAccounts();
 		signedIn = false;
 		found = false;
 		Scanner scanner = new Scanner(System.in);
@@ -199,7 +211,7 @@ public class App {
 		System.out.print("Please enter a password: ");
 		String adminPw = scanner.nextLine();
 		Admin admin = new Admin(adminUser, adminPw);
-		accounts.add(admin);
+		accountService.addAccount(admin);
 
 	}
 
@@ -210,7 +222,7 @@ public class App {
 		String user = scanner.nextLine();
 		System.out.print("Please enter a password: ");
 		String pw = scanner.nextLine();
-		for (Account account : accounts) {
+		for (Account account : accountService.getAccounts()) {
 			if (account.getUsername().equals(user)) {
 				System.out.println("This username is already taken. Please use another username.");
 				unique = false;
@@ -221,11 +233,11 @@ public class App {
 			String ownerOrRenter = scanner.nextLine();
 			if (ownerOrRenter.equalsIgnoreCase("owner")) {
 				Owner owner = new Owner(user, pw);
-				accounts.add(owner);
+				accountService.addAccount(owner);
 				owner.signUp();
 			} else {
 				Renter renter = new Renter(user, pw);
-				accounts.add(renter);
+				accountService.addAccount(renter);
 				renter.signUp();
 			}
 		}
@@ -242,7 +254,7 @@ public class App {
 		System.out.print("Password: ");
 		String password = scanner.nextLine();
 		session[1] = password;
-		for (Account account : accounts) {
+		for (Account account : accountService.getAccounts()) {
 			if (account.getUsername().equals(username) && account.getPassword().equals(password)) {
 				account.signIn();
 				rental.setRenter(account);
