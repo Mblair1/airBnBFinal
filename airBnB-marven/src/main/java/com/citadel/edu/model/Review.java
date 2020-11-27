@@ -7,13 +7,13 @@ public class Review {
 	private static String text;
 	private int ID;
 	
-	private void write() {
+	public void write() {
 		Scanner input = new Scanner(System.in);
 		System.out.println("Please enter your review: ");
 		this.text = input.nextLine();
 		
 	}
-	private void read() {
+	public void read() {
 		System.out.println(this.text);
 	}
 }
